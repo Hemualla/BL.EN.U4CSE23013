@@ -11,20 +11,42 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-// log every incoming request
 app.use(loggerMiddleware);
 
-// health check
+// ── Token auto-refresh ────────────────────────────────────────────────────────
+// The evaluation server token expires every ~15 minutes.
+// We refresh it every 14 minutes so the proxy never fails.
+const EVAL_BASE = "http://20.207.122.201/evaluation-service";
+
+let currentToken = process.env.LOG_AUTH_TOKEN;
+
+const refreshToken = async () => {
+  try {
+    const res = await axios.post(`${EVAL_BASE}/auth`, {
+      email: process.env.EMAIL,
+      rollNo: process.env.ROLL_NO,
+      accessCode: process.env.ACCESS_CODE,
+      clientID: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      name: process.env.NAME,
+    });
+    currentToken = res.data.access_token;
+    console.log("[Token] Refreshed successfully");
+  } catch (err) {
+    console.error("[Token] Refresh failed:", err.message);
+  }
+};
+
+// Refresh every 14 minutes (token expires in ~15 min)
+setInterval(refreshToken, 14 * 60 * 1000);
+
+// ── Health check ──────────────────────────────────────────────────────────────
 app.get("/", (req, res) => {
   res.json({ success: true, message: "Notification API is running" });
 });
 
-// ── Proxy route: forwards /eval/* to the evaluation server ──────────────────
-// This avoids CORS issues when the browser calls the external server directly.
-const EVAL_BASE = "http://20.207.122.201/evaluation-service";
-const getToken = () => process.env.LOG_AUTH_TOKEN;
-
+// ── Proxy: /eval/* → evaluation server ───────────────────────────────────────
+// Frontend calls this instead of the external server directly (avoids CORS).
 app.use("/eval", async (req, res) => {
   try {
     const url = `${EVAL_BASE}${req.path}`;
@@ -34,26 +56,50 @@ app.use("/eval", async (req, res) => {
       params: req.query,
       data: req.body,
       headers: {
-        Authorization: `Bearer ${getToken()}`,
+        Authorization: `Bearer ${currentToken}`,
         "Content-Type": "application/json",
       },
     });
     res.status(response.status).json(response.data);
   } catch (err) {
+    // If token expired mid-request, refresh and retry once
+    if (err.response?.status === 401) {
+      console.log("[Token] 401 received — refreshing and retrying...");
+      await refreshToken();
+      try {
+        const url = `${EVAL_BASE}${req.path}`;
+        const retry = await axios({
+          method: req.method,
+          url,
+          params: req.query,
+          data: req.body,
+          headers: {
+            Authorization: `Bearer ${currentToken}`,
+            "Content-Type": "application/json",
+          },
+        });
+        return res.status(retry.status).json(retry.data);
+      } catch (retryErr) {
+        return res.status(retryErr.response?.status || 500).json(
+          retryErr.response?.data || { message: retryErr.message }
+        );
+      }
+    }
     const status = err.response?.status || 500;
     const data = err.response?.data || { message: err.message };
     res.status(status).json(data);
   }
 });
 
-// main routes
+// ── Main API routes ───────────────────────────────────────────────────────────
 app.use("/api", notificationRoutes);
 
-// 404 handler for unknown routes
+// ── 404 ───────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ success: false, message: "Route not found" });
 });
 
+// ── Start ─────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, async () => {
