@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import StarIcon from "@mui/icons-material/Star";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Navbar = () => {
@@ -76,6 +77,22 @@ const Navbar = () => {
             }}
           >
             Priority Inbox
+          </Button>
+
+          <Button
+            startIcon={<SettingsIcon />}
+            onClick={() => navigate("/manage")}
+            variant={location.pathname === "/manage" ? "contained" : "text"}
+            sx={{
+              color: "white",
+              backgroundColor:
+                location.pathname === "/manage" ? "#7c83fd" : "transparent",
+              "&:hover": { backgroundColor: "#7c83fd33" },
+              textTransform: "none",
+              fontWeight: 500,
+            }}
+          >
+            Manage
           </Button>
         </Box>
       </Toolbar>

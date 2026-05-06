@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import Navbar from "./components/Navbar";
 import AllNotifications from "./pages/AllNotifications";
 import PriorityInbox from "./pages/PriorityInbox";
+import Home from "./pages/Home";
 
 const theme = createTheme({
   palette: {
@@ -37,6 +38,7 @@ function App() {
         <Routes>
           <Route path="/" element={<AllNotifications />} />
           <Route path="/priority" element={<PriorityInbox />} />
+          <Route path="/manage" element={<Home />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

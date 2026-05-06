@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { fetchNotifications } from "../services/notificationService";
 
 const useNotifications = (filters = {}) => {
@@ -6,7 +6,9 @@ const useNotifications = (filters = {}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const loadNotifications = async () => {
+  // useCallback stabilises the function reference so it can safely be
+  // listed in the useEffect dependency array without causing infinite loops.
+  const loadNotifications = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -18,11 +20,12 @@ const useNotifications = (filters = {}) => {
     } finally {
       setLoading(false);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.limit, filters.page, filters.notification_type]);
 
   useEffect(() => {
     loadNotifications();
-  }, [filters.limit, filters.page, filters.notification_type]);
+  }, [loadNotifications]);
 
   return {
     notifications,
