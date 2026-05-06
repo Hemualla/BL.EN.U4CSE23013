@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const axios = require("axios");
 require("dotenv").config();
 
 const loggerMiddleware = require("./middleware/loggerMiddleware");
@@ -17,6 +18,32 @@ app.use(loggerMiddleware);
 // health check
 app.get("/", (req, res) => {
   res.json({ success: true, message: "Notification API is running" });
+});
+
+// ── Proxy route: forwards /eval/* to the evaluation server ──────────────────
+// This avoids CORS issues when the browser calls the external server directly.
+const EVAL_BASE = "http://20.207.122.201/evaluation-service";
+const getToken = () => process.env.LOG_AUTH_TOKEN;
+
+app.use("/eval", async (req, res) => {
+  try {
+    const url = `${EVAL_BASE}${req.path}`;
+    const response = await axios({
+      method: req.method,
+      url,
+      params: req.query,
+      data: req.body,
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+        "Content-Type": "application/json",
+      },
+    });
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    const status = err.response?.status || 500;
+    const data = err.response?.data || { message: err.message };
+    res.status(status).json(data);
+  }
 });
 
 // main routes
