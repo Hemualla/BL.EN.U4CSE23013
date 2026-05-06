@@ -1,10 +1,13 @@
 import axios from "axios";
 
-// Point to the evaluation server's notification API
+const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiYXVkIjoiaHR0cDovLzIwLjI0NC41Ni4xNDQvZXZhbHVhdGlvbi1zZXJ2aWNlIiwiZW1haWwiOiJibC5lbi51NGNzZTIzMDEzQGJsLnN0dWRlbnRzLmFtcml0YS5lZHUiLCJleHAiOjE3NzgwNjIzOTksImlhdCI6MTc3ODA2MTQ5OSwiaXNzIjoiQWZmb3JkIE1lZGljYWwgVGVjaG5vbG9naWVzIFByaXZhdGUgTGltaXRlZCIsImp0aSI6IjBmNGVlZjY5LTg4MzItNDdhNC1iZDExLTI5YWVlODQzNjI3ZCIsImxvY2FsZSI6ImVuLUlOIiwibmFtZSI6ImhlbWFudGggYWxsYSIsInN1YiI6ImFlYmMzMmIwLTc1OGQtNDgxMC05YjJlLTY5MzJmZjY4ZjQ3YiJ9LCJlbWFpbCI6ImJsLmVuLnU0Y3NlMjMwMTNAYmwuc3R1ZGVudHMuYW1yaXRhLmVkdSIsIm5hbWUiOiJoZW1hbnRoIGFsbGEiLCJyb2xsTm8iOiJibC5lbi51NGNzZTIzMDEzIiwiYWNjZXNzQ29kZSI6IlBUQk1tUSIsImNsaWVudElEIjoiYWViYzMyYjAtNzU4ZC00ODEwLTliMmUtNjkzMmZmNjhmNDdiIiwiY2xpZW50U2VjcmV0IjoicW1Ed1hXTXd2Tld1TllIWiJ9.l4UAmdSNUXNcFxcfaeHjC5T3qQkq5pdrJsVDvcb3cdc";
+
+// Axios instance pointing to the evaluation server
 const api = axios.create({
   baseURL: "http://20.207.122.201/evaluation-service",
   headers: {
     "Content-Type": "application/json",
+    Authorization: `Bearer ${TOKEN}`,
   },
 });
 
